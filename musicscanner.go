@@ -1,5 +1,6 @@
 // Copy your chrome History from "%appdata%\..\Local\Google\Chrome\User Data\Default"
-// to this directory. Then run
+// Copy and rename Archived History to History to look at your older preferences
+// to this directory. Then run with "go run musicscanner.go".
 
 package main
 
@@ -11,17 +12,17 @@ import ("fmt"
         )
 
 func main() {
-    // Select all youtube videos from history and order by visit_count
+    // Select 100 youtube videos from history and order by visit_count
     sql := `SELECT * FROM urls
             WHERE url LIKE "https://www.youtube.com/watch?v=%"
             ORDER BY visit_count DESC
             LIMIT 100`
 
     // Open sqlite3 database stored in History file
-    c, err := sqlite3.Open("Archived History")
-    if err!=nil { panic("Cannot connect to History database") }
+    c, err := sqlite3.Open("History")
+    if err != nil { panic("Cannot connect to History database") }
+    defer c.Close()
     row := make(sqlite3.RowMap)
-
 
     output := ""
     // Loop through the rows of the sql query
@@ -40,10 +41,11 @@ func main() {
         output += line
 
         // Print to show progress
-        fmt.Println(line)
+        fmt.Print(line)
     }
 
-    ioutil.WriteFile("MusicPreferences.txt", []byte(output), 0644)
+    err = ioutil.WriteFile("MusicPreferences.txt", []byte(output), 0644)
+    if err != nil { panic("Cannot write to file - MusicPreferences.txt") }
 }
 
 // Open link with http get and looks for "Music" substring
@@ -54,6 +56,6 @@ func containsMusic(link string) bool {
     buff, err := ioutil.ReadAll(response.Body)
     if err != nil { panic("Cannot read http response body") }
     body := string(buff)
-    return strings.Contains(body, "Muziek")
+    return strings.Contains(body, "Music")
 }
 
